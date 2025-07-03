@@ -1,0 +1,10 @@
+<Project>
+	<PropertyGroup>
+		<Version>1.0.0</Version>
+		<Company>SIRIUS S.R.L.</Company>
+		<Authors>Sirius Srl</Authors>
+		<Copyright>Copyright ©  2025</Copyright>
+		<PackageIcon>icon.png</PackageIcon>
+		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+	</PropertyGroup>
+</Project>
