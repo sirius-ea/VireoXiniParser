@@ -150,7 +150,7 @@ public class IniDataParserTests
     {
         var parser = new IniDataParser();
         var sb = new StringBuilder();
-        for (int i = 0; i < 1000; i++)
+        for (int i = 0; i < 100000; i++)
         {
             sb.AppendLine($"[Section{i}]");
             for (int j = 0; j < 100; j++)
@@ -160,7 +160,7 @@ public class IniDataParserTests
         string ini = sb.ToString();
 
         var doc = await parser.ParseFromStringAsync(ini);
-        Assert.Equal(1000, doc.Sections.Count);
+        Assert.Equal(100000, doc.Sections.Count);
         Assert.All(doc.Sections, s => Assert.Equal(100, s.KeyValues.Count));
     }
 
