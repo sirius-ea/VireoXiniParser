@@ -70,7 +70,7 @@ public class IniDataParser : IIniParser
     {
         using StreamReader reader = new(stream, leaveOpen: false);
         string content = await reader.ReadToEndAsync();
-        return ParseFromString(content);
+        return await ParseFromStringAsync(content);
     }
 
     public async Task<(bool Success, IniDocument? Model)> TryParseAsync(Stream stream)
@@ -88,34 +88,48 @@ public class IniDataParser : IIniParser
 
     public IniDocument ParseFromString(string iniContent)
     {
+        // Rimuovi BOM se presente
+        if (!string.IsNullOrEmpty(iniContent) && iniContent[0] == '\uFEFF')
+            iniContent = iniContent[1..];
         List<IniSection> sections = [];
         Dictionary<string, string>? currentKeyValues = null;
         string? currentSection = null;
         string[] separator = ["\r\n", "\n", "\r"];
 
-        string[] lines = iniContent.Split(separator, StringSplitOptions.RemoveEmptyEntries);
-
+        string[] lines = iniContent.Split(separator, StringSplitOptions.None);
+        int lineNumber = 0;
         foreach (string rawLine in lines)
         {
+            lineNumber++;
             string line = rawLine.Trim();
             if (string.IsNullOrWhiteSpace(line) || line.StartsWith(';') || line.StartsWith('#'))
                 continue;
-            if (line.StartsWith('[') && line.EndsWith(']'))
+            if (line.StartsWith('['))
             {
+                int closeIdx = line.IndexOf(']');
+                if (closeIdx == -1)
+                    throw new FormatException($"Section header not closed at line {lineNumber}: '{rawLine}'");
+                string sectionName = line[1..closeIdx].Trim();
+                if (string.IsNullOrWhiteSpace(sectionName))
+                    throw new FormatException($"Section name is empty or whitespace at line {lineNumber}: '{rawLine}'");
                 if (currentSection != null && currentKeyValues != null)
                     sections.Add(new IniSection(currentSection, new Dictionary<string, string>(currentKeyValues)));
-                currentSection = line[1..^1].Trim();
+                currentSection = sectionName;
                 currentKeyValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             }
             else if (currentKeyValues != null)
             {
                 int idx = line.IndexOf('=');
-
-                if (idx <= 0)
+                if (idx < 0)
                     continue;
-
                 string key = line[..idx].Trim();
                 string value = line[(idx + 1)..].Trim();
+                if (key.Contains('\n') || key.Contains('\r'))
+                    throw new FormatException($"Key contains newline at line {lineNumber}: '{rawLine}'");
+                if (value.Contains('\n') || value.Contains('\r'))
+                    throw new FormatException($"Value contains newline at line {lineNumber}: '{rawLine}'");
+                if (key.Length == 0)
+                    continue; // ignore lines with only = and no key
                 currentKeyValues[key] = value;
             }
         }
