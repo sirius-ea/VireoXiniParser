@@ -7,9 +7,4 @@
 		<PackageIcon>icon.png</PackageIcon>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<None Include="$(MSBuildThisFileDirectory)/icon.png" Pack="true" PackagePath=""/>
-	</ItemGroup>
-
 </Project>
